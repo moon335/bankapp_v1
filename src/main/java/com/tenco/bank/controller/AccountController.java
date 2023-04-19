@@ -1,10 +1,13 @@
 package com.tenco.bank.controller;
 
+import java.util.List;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.tenco.bank.dto.SaveFormDto;
 import com.tenco.bank.handler.exception.CustomRestfullException;
 import com.tenco.bank.handler.exception.UnAuthorizedException;
+import com.tenco.bank.repository.model.Account;
 import com.tenco.bank.repository.model.User;
 import com.tenco.bank.service.AccountService;
 import com.tenco.bank.util.Define;
@@ -31,7 +35,7 @@ public class AccountController {
 	 * @return 목록 페이지 이동
 	 */
 	@GetMapping({"/list", "/"})
-	public String list() {
+	public String list(Model model) {
 		
 		// 인증 검사 처리
 		User principal = (User)session.getAttribute(Define.PRINCIPAL);
@@ -39,8 +43,18 @@ public class AccountController {
 			throw new UnAuthorizedException("로그인 먼저 해주세요.", HttpStatus.UNAUTHORIZED);
 		}
 		
-		// prefix
-		// suffix
+		// 1. 
+		List<Account> accountList = accountService.readAccountList(principal.getId());
+		// View 화면으로 데이터를 내려 주는 기술
+		// ModelAndView, Model을 활용
+		// 보통 Model을 권장
+		// ModelAndView는 동적인 화면 구현할 때 사용
+		if(accountList.isEmpty()) {
+			model.addAttribute("accountList", null);
+		} else {
+			model.addAttribute("accountList", accountList);
+		}
+		
 		return "/account/list";
 	}
 	
@@ -69,8 +83,8 @@ public class AccountController {
 	@GetMapping("/save")
 	public String save() {
 		// 인증 검사 처리
-		User user = (User)session.getAttribute(Define.PRINCIPAL);
-		if(user == null) {
+		User principal = (User)session.getAttribute(Define.PRINCIPAL);
+		if(principal == null) {
 			throw new UnAuthorizedException("로그인 먼저 해주세요.", HttpStatus.UNAUTHORIZED);
 		}
 		return "/account/saveForm";
@@ -88,8 +102,8 @@ public class AccountController {
 	public String saveProc(SaveFormDto saveFormDto) {
 		
 		// 인증검사
-		User user = (User)session.getAttribute(Define.PRINCIPAL);
-		if(user == null) {
+		User principal = (User)session.getAttribute(Define.PRINCIPAL);
+		if(principal == null) {
 			throw new UnAuthorizedException("로그인 먼저 해주세요.", HttpStatus.UNAUTHORIZED);
 		}
 		
@@ -105,7 +119,7 @@ public class AccountController {
 		}
 		
 		// 서비스 호출
-		accountService.createAccount(saveFormDto, user.getId());
+		accountService.createAccount(saveFormDto, principal.getId());
 		
 		return "redirect:/account/list";
 	}
