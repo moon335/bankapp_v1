@@ -17,4 +17,7 @@ public interface AccountRepository {
 	public Account findById(int id);
 	public List<Account> findByUserId(Integer UserId); // 사용자의 모든 계좌
 	
+	// 코드 추가
+	public Account findByNumber(String number);
+	
 }

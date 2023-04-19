@@ -8,15 +8,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.tenco.bank.dto.SaveFormDto;
+import com.tenco.bank.dto.WithdrawFormDto;
 import com.tenco.bank.handler.exception.CustomRestfullException;
 import com.tenco.bank.repository.interfaces.AccountRepository;
+import com.tenco.bank.repository.interfaces.HistoryRepository;
 import com.tenco.bank.repository.model.Account;
+import com.tenco.bank.repository.model.History;
 
 @Service // IoC 대상 + 싱글톤
 public class AccountService {
 	
 	@Autowired
 	private AccountRepository accountRepository;
+	
+	@Autowired
+	private HistoryRepository historyRepository;
 	
 	/**
 	 * 계좌 생성 기능
@@ -44,6 +50,50 @@ public class AccountService {
 		List<Account> list = accountRepository.findByUserId(UserId);
 		
 		return list;
+	}
+	
+	// 출금 기능 로직 고민해보기
+	// 1. 계좌 존재 여부 확인 -> select query
+	// 2. 본인 계좌 여부 확인 -> select query
+	// 3. 계좌 비번 확인 -> select query
+	// 4. 잔액 여부 확인 -> select query
+	// 5. 출금 처리 -> update query
+	// 6. 거래내역 등록 -> insert query
+	@Transactional
+	public void updateAccountWithdraw(WithdrawFormDto withdrawFormDto, Integer principalId) {
+		
+		Account accountEntity = accountRepository.findByNumber(withdrawFormDto.getWAccountNumber());
+		// 1
+		if(accountEntity == null) {
+			throw new CustomRestfullException("계좌가 없습니다.", HttpStatus.BAD_REQUEST);
+		}
+		// 2
+		if(accountEntity.getUserId() != principalId) {
+			throw new CustomRestfullException("본인 소유의 계좌가 아닙니다.", HttpStatus.UNAUTHORIZED);
+		}
+		// 3  
+		if(accountEntity.getPassword().equals(withdrawFormDto.getWAccountPassword()) == false) {
+			throw new CustomRestfullException("출금 계좌 비밀번호가 틀렸습니다.", HttpStatus.UNAUTHORIZED);
+		}
+		// 4
+		if(accountEntity.getBalance() < withdrawFormDto.getAmount()) {
+			throw new CustomRestfullException("잔액이 부족합니다.", HttpStatus.BAD_REQUEST);
+		}
+		// 5
+		accountEntity.withdraw(withdrawFormDto.getAmount());
+		accountRepository.updateById(accountEntity);
+		// 6
+		History history = new History();
+		history.setAmount(withdrawFormDto.getAmount());
+		history.setWAccountId(accountEntity.getId());
+		history.setDAccountId(null);
+		history.setWBalance(accountEntity.getBalance());
+		history.setDBalance(null);
+		
+		int resultRowCount = historyRepository.insert(history);
+		if(resultRowCount != 1) {
+			throw new CustomRestfullException("정상 처리 되지 않았습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 	
 } // end of class
