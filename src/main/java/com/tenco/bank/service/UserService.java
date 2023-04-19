@@ -20,7 +20,7 @@ public class UserService {
 	@Transactional 
 	// 메서드 호출이 시작될 때 트랜잭션 시작
 	// 메서드 종료시 트랜잭션 종료 (commit)
-	public void signUp(SignUpFormDto signUpFormDto) {
+	public void createUser(SignUpFormDto signUpFormDto) {
 		int result = userRepository.insert(signUpFormDto);
 		if(result != 1) {
 			throw new CustomRestfullException("회원 가입 실패", HttpStatus.INTERNAL_SERVER_ERROR);
