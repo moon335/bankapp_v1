@@ -1,6 +1,7 @@
 package com.tenco.bank.repository.model;
 
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 
 import org.springframework.http.HttpStatus;
 
@@ -50,6 +51,12 @@ public class Account {
 		if(this.userId != principalId) {
 			throw new CustomRestfullException("본인 소유의 계좌가 아닙니다.", HttpStatus.FORBIDDEN);
 		}
+	}
+	
+	public String formatBalance() {
+		DecimalFormat df = new DecimalFormat("###,###");
+		String formatNumber = df.format(balance);
+		return formatNumber + "원";
 	}
 	
 } // end of class
