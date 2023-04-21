@@ -44,18 +44,9 @@ public class AccountController {
 	@GetMapping({"/list", "/"})
 	public String list(Model model) {
 		
-		// 인증 검사 처리
 		User principal = (User)session.getAttribute(Define.PRINCIPAL);
-		if(principal == null) {
-			throw new UnAuthorizedException("로그인 먼저 해주세요.", HttpStatus.UNAUTHORIZED);
-		}
 		
-		// 1. 
 		List<Account> accountList = accountService.readAccountList(principal.getId());
-		// View 화면으로 데이터를 내려 주는 기술
-		// ModelAndView, Model을 활용
-		// 보통 Model을 권장
-		// ModelAndView는 동적인 화면 구현할 때 사용
 		if(accountList.isEmpty()) {
 			model.addAttribute("accountList", null);
 		} else {
@@ -81,11 +72,7 @@ public class AccountController {
 	@PostMapping("/withdraw-proc")
 	public String withdrawProc(WithdrawFormDto withdrawFormDto) {
 		
-		// 인증 처리
 		User principal = (User)session.getAttribute(Define.PRINCIPAL);
-		if(principal == null) {
-			throw new UnAuthorizedException("로그인 먼저 해주세요", HttpStatus.BAD_REQUEST);
-		}
 		// 유효성 검사
 		if(withdrawFormDto.getAmount() == null) {
 			throw new CustomRestfullException("금액을 입력하세요", HttpStatus.BAD_REQUEST);
@@ -109,10 +96,6 @@ public class AccountController {
 	@GetMapping("/deposit")
 	public String deposit() {
 		
-		User principal = (User)session.getAttribute(Define.PRINCIPAL);
-		if(principal == null) {
-			throw new UnAuthorizedException("로그인 먼저 해주세요", HttpStatus.BAD_REQUEST);
-		}
 		return "/account/depositForm";
 	}
 	
@@ -120,10 +103,6 @@ public class AccountController {
 	@PostMapping("/deposit-proc")
 	public String depositProc(DepositFormDto depositFormDto) {
 		
-		User principal = (User)session.getAttribute(Define.PRINCIPAL);
-		if(principal == null) {
-			throw new UnAuthorizedException("로그인 먼저 해주세요", HttpStatus.BAD_REQUEST);
-		}
 		if(depositFormDto.getAmount() == null) {
 			throw new CustomRestfullException("금액을 입력해 주세요.", HttpStatus.BAD_REQUEST);
 		}
@@ -142,9 +121,6 @@ public class AccountController {
 	// 이체 페이지
 	@GetMapping("/transfer")
 	public String transfer() {
-		if(session.getAttribute(Define.PRINCIPAL) == null) {
-			throw new CustomRestfullException("로그인 먼저 해주세요", HttpStatus.UNAUTHORIZED);
-		}
 		return "/account/transferForm";
 	}
 	
@@ -153,9 +129,6 @@ public class AccountController {
 	public String transferProc(TransferFormDto transferFormDto) {
 		
 		User principal = (User)session.getAttribute(Define.PRINCIPAL);
-		if(principal == null) {
-			throw new CustomRestfullException("로그인 먼저 해주세요", HttpStatus.UNAUTHORIZED);
-		}
 		System.out.println(transferFormDto.getAmount());
 		// 1. 출금 계좌 번호 입력 여부
 		// 2. 입금 계좌 번호 입력 여부
@@ -210,9 +183,6 @@ public class AccountController {
 		
 		// 인증검사
 		User principal = (User)session.getAttribute(Define.PRINCIPAL);
-		if(principal == null) {
-			throw new UnAuthorizedException("로그인 먼저 해주세요.", HttpStatus.UNAUTHORIZED);
-		}
 		
 		// 유효성 검사
 		if(saveFormDto.getNumber() == null || saveFormDto.getNumber().isEmpty()) {
@@ -235,9 +205,6 @@ public class AccountController {
 	@GetMapping("/detail/{id}")
 	public String detail(@PathVariable Integer id, @RequestParam(name = "type", defaultValue = "all", required = false) String type , Model model) {
 		User principal = (User)session.getAttribute(Define.PRINCIPAL);
-		if(principal == null) {
-			throw new UnAuthorizedException("로그인 먼저 해주세요.", HttpStatus.UNAUTHORIZED);
-		}
 		Account account = accountService.readAccount(id);
 		List<HistoryDto> historyList = accountService.readHistoryListByAccount(type, id);
 		// 화면을 구성하기 위해 필요한 데이터
